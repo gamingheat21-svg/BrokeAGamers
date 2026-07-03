@@ -23,9 +23,21 @@ const Search = () => {
     setLoading(true);
     setError('');
     try {
-      const res = await api.get(`/games/search?query=${encodeURIComponent(searchQuery)}`);
-      setResults(res.data);
+      // Bypass backend to fetch directly from CheapShark
+      const res = await fetch(`https://www.cheapshark.com/api/1.0/games?title=${encodeURIComponent(searchQuery)}&limit=20`);
+      if (!res.ok) throw new Error('Failed to fetch');
+      const data = await res.json();
+      
+      const mappedResults = data.map(game => ({
+        id: game.gameID,
+        name: game.external,
+        released: `Cheapest: $${game.cheapest}`,
+        background_image: game.thumb
+      }));
+      
+      setResults(mappedResults);
     } catch (err) {
+      console.error(err);
       setError('Failed to search games');
     } finally {
       setLoading(false);

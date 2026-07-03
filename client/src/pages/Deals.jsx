@@ -20,10 +20,18 @@ const Deals = () => {
 
   const fetchDeals = async () => {
     setLoading(true);
+    setError('');
     try {
-      const res = await api.get('/deals', { params: filters });
+      const params = {};
+      if (filters.upperPrice) params.upperPrice = filters.upperPrice;
+      if (filters.minRating > 0) {
+        params.minRating = filters.minRating;
+      }
+
+      const res = await api.get('/deals', { params });
       setDeals(res.data);
     } catch (err) {
+      console.error(err);
       setError('Failed to load deals');
     } finally {
       setLoading(false);

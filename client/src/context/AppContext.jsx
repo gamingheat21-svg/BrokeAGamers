@@ -26,8 +26,11 @@ export const AppProvider = ({ children }) => {
   const [currency, setCurrency] = useState(localStorage.getItem('currency') || 'USD');
 
   useEffect(() => {
-    // Fetch stores
-    api.get('/deals/stores').then(res => setStores(res.data)).catch(console.error);
+    // Fetch stores directly to bypass backend IP block
+    fetch('https://www.cheapshark.com/api/1.0/stores')
+      .then(res => res.json())
+      .then(data => setStores(data))
+      .catch(console.error);
   }, []);
 
   const changeCurrency = (curr) => {

@@ -14,10 +14,12 @@ const FreeGames = () => {
 
   const fetchFreeGames = async () => {
     setLoading(true);
+    setError('');
     try {
-      const res = await api.get('/deals', { params: { upperPrice: 0 } });
-      setDeals(res.data);
+      const res = await api.get('/deals', { params: { upperPrice: 0, onSale: 1 } });
+      setDeals(res.data.filter(deal => Number(deal.salePrice) === 0));
     } catch (err) {
+      console.error(err);
       setError('Failed to load free games');
     } finally {
       setLoading(false);
