@@ -38,7 +38,7 @@ const getGameDetails = async (req, res) => {
     const stores = await cheapsharkService.getStores();
     
     // Map deals to include actual store names
-    const mappedDeals = csGameDetails.deals.map(deal => {
+    const mappedDeals = (csGameDetails.deals || []).map(deal => {
       const storeInfo = stores.find(s => s.storeID === deal.storeID);
       return {
         store: storeInfo ? storeInfo.storeName : `Store ${deal.storeID}`,

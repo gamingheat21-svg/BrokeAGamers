@@ -18,42 +18,10 @@ const GameDetail = () => {
 
   const fetchGameDetails = async () => {
     setLoading(true);
+    setError('');
     try {
-      // Fetch directly from CheapShark to bypass backend IP block
-      const res = await fetch(`https://www.cheapshark.com/api/1.0/games?id=${id}`);
-      if (!res.ok) throw new Error('Failed to fetch from CheapShark');
-      const csGameDetails = await res.json();
-      
-      if (!csGameDetails || !csGameDetails.info) {
-        throw new Error('Game not found');
-      }
-
-      // We need to fetch stores to map storeID to storeName
-      const storesRes = await fetch('https://www.cheapshark.com/api/1.0/stores');
-      const stores = await storesRes.json();
-
-      const mappedDeals = (csGameDetails.deals || []).map(deal => {
-        const storeInfo = stores.find(s => s.storeID === deal.storeID);
-        return {
-          store: storeInfo ? storeInfo.storeName : `Store ${deal.storeID}`,
-          normalPrice: parseFloat(deal.retailPrice),
-          salePrice: parseFloat(deal.price),
-          savings: parseFloat(deal.savings)
-        };
-      });
-
-      // Mock requirements since RAWG is mocked in backend anyway
-      const mockRequirements = {
-        minimum: { os: "Windows 10", processor: "Intel Core i5-3570K", memory: "8 GB RAM", graphics: "GTX 970" },
-        recommended: { os: "Windows 10", processor: "Intel Core i7-4790", memory: "12 GB RAM", graphics: "GTX 1060" }
-      };
-
-      setGame({
-        id,
-        name: csGameDetails.info.title,
-        requirements: mockRequirements,
-        deals: mappedDeals
-      });
+      const res = await api.get(`/games/${id}`);
+      setGame(res.data);
       
       if (user) {
         try {

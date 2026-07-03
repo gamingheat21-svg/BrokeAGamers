@@ -3,27 +3,51 @@ import api from '../services/api';
 import DealCard from '../components/DealCard';
 import { Gift } from 'lucide-react';
 
+const PAGE_SIZE = 60;
+
 const FreeGames = () => {
   const [deals, setDeals] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [pageNumber, setPageNumber] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    fetchFreeGames();
+    fetchFreeGames(0, false);
   }, []);
 
-  const fetchFreeGames = async () => {
-    setLoading(true);
+  const fetchFreeGames = async (page = 0, append = false) => {
+    if (append) {
+      setLoadingMore(true);
+    } else {
+      setLoading(true);
+    }
     setError('');
     try {
-      const res = await api.get('/deals', { params: { upperPrice: 0, onSale: 1 } });
-      setDeals(res.data.filter(deal => Number(deal.salePrice) === 0));
+      const res = await api.get('/deals', {
+        params: {
+          upperPrice: 0,
+          onSale: 1,
+          pageNumber: page,
+          pageSize: PAGE_SIZE
+        }
+      });
+      const freeDeals = res.data.filter(deal => Number(deal.salePrice) === 0);
+      setDeals(prev => append ? [...prev, ...freeDeals] : freeDeals);
+      setPageNumber(page);
+      setHasMore(res.data.length === PAGE_SIZE);
     } catch (err) {
       console.error(err);
       setError('Failed to load free games');
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
+  };
+
+  const loadMoreFreeGames = () => {
+    fetchFreeGames(pageNumber + 1, true);
   };
 
   return (
@@ -46,16 +70,31 @@ const FreeGames = () => {
           No free games found at the moment.
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {deals.map(deal => (
-            <div key={deal.dealID} className="relative group">
-              <div className="absolute -top-3 -right-3 z-10 bg-accent px-3 py-1 rounded-full text-xs font-bold border shadow-lg border-green-800 text-white animate-pulse">
-                FREE
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {deals.map(deal => (
+              <div key={deal.dealID} className="relative group">
+                <div className="absolute -top-3 -right-3 z-10 bg-accent px-3 py-1 rounded-full text-xs font-bold border shadow-lg border-green-800 text-white animate-pulse">
+                  FREE
+                </div>
+                <DealCard deal={deal} />
               </div>
-              <DealCard deal={deal} />
+            ))}
+          </div>
+
+          {hasMore && (
+            <div className="flex justify-center mt-10">
+              <button
+                type="button"
+                onClick={loadMoreFreeGames}
+                disabled={loadingMore}
+                className="btn-primary min-w-40 disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {loadingMore ? 'Loading...' : 'Load More'}
+              </button>
             </div>
-          ))}
-        </div>
+          )}
+        </>
       )}
     </div>
   );
